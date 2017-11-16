@@ -1,0 +1,57 @@
+package com.witkups.pozar
+
+rule "init"
+    then
+        insert(new Pomiar(false, 300));
+        insert(new Pomiar(false, 200));
+        System.out.println("Zmierzono...?");
+    end
+
+rule "Ustawianie pozaru"
+    when
+        exists pomiar: Pomiar(dym || temperatura > 150)
+    then
+        insert(new Pozar());
+        System.out.println("Wstawiam pozar");
+    end
+
+rule "call"
+    when
+        telefon: Telefon()
+    then
+        System.out.println("Proszę zadzwonić pod " + telefon.getNumer());
+    end
+
+rule "wykrywanie pozaru"
+    when
+        pozar: Pozar()
+    then
+        System.out.println("Pali sie");
+    end
+
+rule "dodaj telefon"
+    when
+        pozar: Pozar()
+    then
+        insert(new Telefon(112));
+        System.out.println("Wstawiam telefon");
+    end
+
+rule "straz przyjechala"
+    when
+        straz: Straz()
+        pozar: Pozar()
+    then
+        System.out.println("Straz przyjechala");
+        retract(pozar);
+    end
+
+rule "pozar zgaszony"
+    when
+        straz: Straz()
+        not Pozar()
+    then
+        retract(straz)
+        System.out.println("Straz zgasiła i odjechala");
+
+    end

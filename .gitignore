@@ -1,0 +1,7 @@
+**.project
+**/eclipse
+**.idea
+**.iml
+**/plans
+**/target
+**/lib

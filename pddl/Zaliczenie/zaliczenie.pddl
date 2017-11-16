@@ -29,7 +29,12 @@
 		:precondition (and
 			(auto ?m)
 			(magazyn ?m)
-			(or (rodzaj-auto ?r)(auto-puste))
+			(forall (?k1 - kij)
+				(or 
+					(not (kij-w-auto ?k1))
+					(and (kij-w-auto ?k1)(kij-rodzaj ?k1 ?r))
+				)
+			)
 			(not (kij-w-auto ?k))
 			(kij-rodzaj ?k ?r)
 		)
@@ -50,18 +55,6 @@
 			(not (zamowienie ?m ?k))
 			(dostarczenie ?m ?k)
 			(not (kij-w-auto ?k))
-		)
-	)
-	(:action resetuj-typ
-		:parameters ()
-		:precondition
-		(and
-			(forall (?k - kij) (not (kij-w-auto ?k)))
-		)
-		:effect
-		(and
-			(auto-puste)
-			(forall (?r - rodzaj) (not(rodzaj-auto ?r))) 
 		)
 	)
 )
