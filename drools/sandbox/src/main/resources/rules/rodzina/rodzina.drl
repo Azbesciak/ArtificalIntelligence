@@ -1,0 +1,226 @@
+package com.witkups.rodzina
+
+rule "Init"
+	when
+	then
+		Osoba maria          = new Osoba("Maria");
+		Osoba ewa            = new Osoba("Ewa");
+		Osoba agata          = new Osoba("Agata");
+		Osoba anna           = new Osoba("Anna");
+		Osoba agnieszka      = new Osoba("Agnieszka");
+		Osoba beata          = new Osoba("Beata");
+		Osoba iwona          = new Osoba("Iwona");
+		Osoba joanna         = new Osoba("Joanna");
+		Osoba piotr          = new Osoba("Piotr");
+		Osoba adam           = new Osoba("Adam");
+		Osoba marek          = new Osoba("Marek");
+		Osoba robert         = new Osoba("Robert");
+		Osoba jan            = new Osoba("Jan");
+		Osoba krzysztof      = new Osoba("Krzysztof");
+		Osoba radek          = new Osoba("Radek");
+		Osoba darek          = new Osoba("Darek");
+		Osoba tomek          = new Osoba("Tomek");
+		Osoba jacek          = new Osoba("Jacek");
+
+		insert(new Relacja(maria,marek,TypRelacji.RODZIC));
+		insert(new Relacja(maria,agata,TypRelacji.RODZIC));
+		insert(new Relacja(maria,jan,TypRelacji.RODZIC));
+		insert(new Relacja(piotr,marek,TypRelacji.RODZIC));
+		insert(new Relacja(piotr,agata,TypRelacji.RODZIC));
+		insert(new Relacja(piotr,jan,TypRelacji.RODZIC));
+		insert(new Relacja(ewa,anna,TypRelacji.RODZIC));
+		insert(new Relacja(ewa,joanna,TypRelacji.RODZIC));
+		insert(new Relacja(ewa,krzysztof,TypRelacji.RODZIC));
+		insert(new Relacja(adam,anna,TypRelacji.RODZIC));
+		insert(new Relacja(adam,joanna,TypRelacji.RODZIC));
+		insert(new Relacja(adam,krzysztof,TypRelacji.RODZIC));
+		insert(new Relacja(agata,radek,TypRelacji.RODZIC));
+		insert(new Relacja(agata,beata,TypRelacji.RODZIC));
+		insert(new Relacja(robert,radek,TypRelacji.RODZIC));
+		insert(new Relacja(robert,beata,TypRelacji.RODZIC));
+		insert(new Relacja(anna,darek,TypRelacji.RODZIC));
+		insert(new Relacja(anna,tomek,TypRelacji.RODZIC));
+		insert(new Relacja(jan,darek,TypRelacji.RODZIC));
+		insert(new Relacja(jan,tomek,TypRelacji.RODZIC));
+		insert(new Relacja(agnieszka,jacek,TypRelacji.RODZIC));
+		insert(new Relacja(agnieszka,iwona,TypRelacji.RODZIC));
+		insert(new Relacja(krzysztof,jacek,TypRelacji.RODZIC));
+		insert(new Relacja(krzysztof,iwona,TypRelacji.RODZIC));
+end
+
+
+rule "detect man"
+    when
+        relation:
+            (Relacja(osoba: osoby[0]) or Relacja(osoba: osoby[1]))
+            eval(osoba.plec == Plec.NIEZNANA)
+            eval(!osoba.imie.endsWith("a"))
+    then
+        osoba.plec = Plec.MEZCZYZNA;
+        for (Relacja rel : osoba.relacje)
+            update(rel);
+//        System.out.println(String.format("%s - mezczyzna", osoba));
+    end
+
+rule "detect woman"
+    when
+        relation:
+            (Relacja(osoba: osoby[0]) or Relacja(osoba: osoby[1]))
+            eval(osoba.plec == Plec.NIEZNANA)
+            eval(osoba.imie.endsWith("a"))
+    then
+        osoba.plec = Plec.KOBIETA;
+
+        for (Relacja rel : osoba.relacje)
+            update(rel);
+//        System.out.println(String.format("%s - kobieta", osoba));
+    end
+
+rule "detect mother"
+    when
+        relation:
+            (Relacja(osoba: osoby[0]))
+            eval(osoba.plec == Plec.KOBIETA)
+            eval(relation.typ == TypRelacji.RODZIC)
+    then
+         insert(new Relacja(relation.osoby[0], relation.osoby[1], TypRelacji.MATKA));
+         System.out.println(String.format("%s %s %s", relation.osoby[0], TypRelacji.MATKA, relation.osoby[1]));
+    end
+
+rule "detect father"
+    when
+        relation:
+            (Relacja(osoba: osoby[0]))
+            eval(osoba.plec == Plec.MEZCZYZNA)
+            eval(relation.typ == TypRelacji.RODZIC)
+    then
+         insert(new Relacja(relation.osoby[0], relation.osoby[1], TypRelacji.OJCIEC));
+         System.out.println(String.format("%s %s %s", relation.osoby[0], TypRelacji.OJCIEC, relation.osoby[1]));
+    end
+
+rule "detect grandma"
+    when
+        firstRelation: Relacja(osoba: osoby[0], rodzic: osoby[1])
+            eval(firstRelation.typ == TypRelacji.MATKA)
+        secondRelation: Relacja(dziecko: osoby[1])
+            eval(secondRelation.osoby[0] == rodzic)
+            eval(secondRelation.typ == TypRelacji.RODZIC)
+
+    then
+         insert(new Relacja(firstRelation.osoby[0], secondRelation.osoby[1], TypRelacji.BABCIA));
+         System.out.println(String.format("%s %s %s", firstRelation.osoby[0], TypRelacji.BABCIA, secondRelation.osoby[1]));
+    end
+
+rule "detect grandfa"
+    when
+        firstRelation: Relacja(osoba: osoby[0], rodzic: osoby[1])
+            eval(firstRelation.typ == TypRelacji.OJCIEC)
+        secondRelation: Relacja(dziecko: osoby[1])
+            eval(secondRelation.osoby[0] == rodzic)
+            eval(secondRelation.typ == TypRelacji.RODZIC)
+
+    then
+         insert(new Relacja(firstRelation.osoby[0], secondRelation.osoby[1], TypRelacji.DZIADEK));
+         System.out.println(String.format("%s %s %s", firstRelation.osoby[0], TypRelacji.DZIADEK, secondRelation.osoby[1]));
+    end
+
+rule "detect brother"
+    when
+        firstRelation: Relacja(rodzic1: osoby[0], dziecko1: osoby[1])
+            eval(firstRelation.typ == TypRelacji.RODZIC)
+        secondRelation: Relacja(rodzic2: osoby[0], dziecko2: osoby[1])
+            eval(secondRelation.typ == TypRelacji.RODZIC)
+            eval(rodzic1 == rodzic2)
+            eval(dziecko1 != dziecko2)
+            eval(dziecko1.plec == Plec.MEZCZYZNA)
+        not Relacja(osoby[0] == dziecko1, osoby[1] == dziecko2, typ == TypRelacji.BRAT)
+
+    then
+    System.out.println(firstRelation + " " + secondRelation);
+         insert(new Relacja(dziecko1, dziecko2, TypRelacji.BRAT));
+         System.out.println(String.format("%s %s %s", dziecko1, TypRelacji.BRAT, dziecko2));
+    end
+
+rule "detect sister"
+    when
+        firstRelation: Relacja(rodzic1: osoby[0], dziecko1: osoby[1])
+            eval(firstRelation.typ == TypRelacji.RODZIC)
+        secondRelation: Relacja(rodzic2: osoby[0], dziecko2: osoby[1])
+            eval(secondRelation.typ == TypRelacji.RODZIC)
+            eval(rodzic1 == rodzic2)
+            eval(dziecko1 != dziecko2)
+            eval(dziecko1.plec == Plec.KOBIETA)
+        not Relacja(osoby[0] == dziecko1, osoby[1] == dziecko2, typ == TypRelacji.SIOSTRA)
+
+    then
+         insert(new Relacja(dziecko1, dziecko2, TypRelacji.SIOSTRA));
+         System.out.println(String.format("%s %s %s", dziecko1, TypRelacji.SIOSTRA, dziecko2));
+    end
+
+
+rule "detect wujek"
+    when
+        firstRelation: Relacja(matka: osoby[0], dziecko: osoby[1])
+            eval(firstRelation.typ == TypRelacji.MATKA)
+        secondRelation: Relacja(wujek: osoby[0], mama: osoby[1])
+            eval(secondRelation.typ == TypRelacji.BRAT)
+            eval(matka == mama)
+        not Relacja(osoby[0] == wujek, osoby[1] == dziecko, typ == TypRelacji.WUJEK)
+
+    then
+         insert(new Relacja(wujek, dziecko, TypRelacji.WUJEK));
+         System.out.println(String.format("%s %s %s", wujek, TypRelacji.WUJEK, dziecko));
+    end
+
+rule "detect stryj"
+    when
+        firstRelation: Relacja(ojciec: osoby[0], dziecko: osoby[1])
+            eval(firstRelation.typ == TypRelacji.OJCIEC)
+        secondRelation: Relacja(stryj: osoby[0], tata: osoby[1])
+            eval(secondRelation.typ == TypRelacji.BRAT)
+            eval(ojciec == tata)
+        not Relacja(osoby[0] == stryj, osoby[1] == dziecko, typ == TypRelacji.STRYJ)
+    then
+         insert(new Relacja(stryj, dziecko, TypRelacji.STRYJ));
+         System.out.println(String.format("%s %s %s", stryj, TypRelacji.STRYJ, dziecko));
+    end
+
+rule "detect ciotka"
+    when
+        firstRelation: Relacja(rodzic: osoby[0], dziecko: osoby[1])
+            eval(firstRelation.typ == TypRelacji.RODZIC)
+        secondRelation: Relacja(ciotka: osoby[0], rodzic2: osoby[1])
+            eval(secondRelation.typ == TypRelacji.SIOSTRA)
+            eval(rodzic == rodzic2)
+        not Relacja(osoby[0] == ciotka, osoby[1] == dziecko, typ == TypRelacji.CIOTKA)
+    then
+         insert(new Relacja(ciotka, dziecko, TypRelacji.CIOTKA));
+         System.out.println(String.format("%s %s %s", ciotka, TypRelacji.CIOTKA, dziecko));
+    end
+
+rule "detect kuzyn"
+    when
+        firstRelation: Relacja(wujostwo: osoby[0], dziecko: osoby[1])
+            eval(
+                firstRelation.typ == TypRelacji.CIOTKA ||
+                firstRelation.typ == TypRelacji.WUJEK ||
+                firstRelation.typ == TypRelacji.STRYJ)
+        secondRelation: Relacja(wujostwo2: osoby[0], kuzyn: osoby[1])
+            eval(secondRelation.typ == TypRelacji.RODZIC)
+            eval(wujostwo == wujostwo2)
+            not Relacja(osoby[0] == kuzyn, osoby[1] == dziecko, typ == TypRelacji.KUZYN)
+            not Relacja(osoby[0] == dziecko, osoby[1] == kuzyn, typ == TypRelacji.KUZYN)
+    then
+        insert(new Relacja(kuzyn, dziecko, TypRelacji.KUZYN));
+        insert(new Relacja(dziecko, kuzyn, TypRelacji.KUZYN));
+        System.out.println(String.format("%s %s %s", kuzyn, TypRelacji.KUZYN, dziecko));
+    end
+
+query "all wujek and stryjek and ciotka"
+    rel: (
+         Relacja(typ == TypRelacji.STRYJ) or
+         Relacja(typ == TypRelacji.WUJEK) or
+         Relacja(typ == TypRelacji.CIOTKA)
+     )
+end
+
