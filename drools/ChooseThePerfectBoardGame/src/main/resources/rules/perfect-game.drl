@@ -1,6 +1,0 @@
-package com.si.perfectgame
-
-rule "init"
-then
-    System.out.println("lama");
-end
